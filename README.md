@@ -5,20 +5,28 @@
 > Its logrus client.
 
 ```
-import log "github.com/sillyhatxu/microlog"
+import (
+    log "github.com/sillyhatxu/microlog"
+    "github.com/sirupsen/logrus"
+    "net"
+)
 
-func main(){
-    logFormatter := &log.JSONFormatter{
-        FieldMap: *&log.FieldMap{
-            log.FieldKeyMsg: "message",
-        },
-    }
-    conn, err := net.Dial("tcp", "localhost:8080")
-    assert.Nil(t, err)
-    hook := New(conn, logFormatter)
-    logrusConfig := NewLogrusConfig(logFormatter, log.DebugLevel, log.Fields{"project": "test-project", "module": "project-module"}, true, hook)
-    err = logrusConfig.InstallConfig()
-
+func main() {
+	logFormatter := &logrus.JSONFormatter{
+		FieldMap: *&logrus.FieldMap{
+			logrus.FieldKeyMsg: "message",
+		},
+	}
+	conn, err := net.Dial("tcp", "localhost:51401")
+	if err != nil {
+		log.Fatal("net.Dial error.", err)
+	}
+	hook := log.New(conn, logFormatter)
+	logrusConfig := log.NewLogrusConfig(logFormatter, logrus.DebugLevel, logrus.Fields{"project": "test", "module": "stock-backend-internal-api"}, true, hook)
+	err = logrusConfig.InstallConfig()
+	if err != nil {
+		log.Fatal("logrus config initial error.", err)
+	}
 	log.Debug("This is info log.")
 	log.Info("This is info log.")
 }
