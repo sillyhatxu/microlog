@@ -17,16 +17,18 @@ func main() {
 			logrus.FieldKeyMsg: "message",
 		},
 	}
-	conn, err := net.Dial("tcp", "localhost:51401")
+	conn, err := net.Dial("tcp", "localhost:8001")
 	if err != nil {
 		log.Fatal("net.Dial error.", err)
 	}
 	hook := log.New(conn, logFormatter)
-	logrusConfig := log.NewLogrusConfig(logFormatter, logrus.DebugLevel, logrus.Fields{"project": "test", "module": "stock-backend-internal-api"}, true, hook)
+	logrusConfig := log.NewLogrusConfig(logFormatter, logrus.DebugLevel, logrus.Fields{"project": "test-project", "module": "mode-test"}, true, hook)
 	err = logrusConfig.InstallConfig()
 	if err != nil {
 		log.Fatal("logrus config initial error.", err)
 	}
+	
+	
 	log.Debug("This is info log.")
 	log.Info("This is info log.")
 }
