@@ -4,24 +4,52 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"net"
+	"os"
 	"testing"
 )
 
-func TestMicrolog(t *testing.T) {
+//
+//func TestMicrolog(t *testing.T) {
+//	logFormatter := &log.JSONFormatter{
+//		FieldMap: *&log.FieldMap{
+//			log.FieldKeyMsg: "message",
+//		},
+//	}
+//	conn, err := net.Dial("tcp", "localhost:51401")
+//	assert.Nil(t, err)
+//	hook := New(conn, logFormatter)
+//	logrusConfig := NewLogrusConfig(logFormatter, log.DebugLevel, log.Fields{"project": "test", "module": "stock-backend-internal-api"}, true, hook)
+//	err = logrusConfig.InstallConfig()
+//
+//	assert.Nil(t, err)
+//	//import log "github.com/sillyhatxu/microlog"
+//	//log.Debug("This is info log.")
+//	//log.Info("This is info log.")
+//	Debug("This is debug log.HEIHEI")
+//	Info("This is info log.")
+//}
+//
+//func TestMicrologDefault(t *testing.T) {
+//	Debug("This is debug log.HEIHEI")
+//	Info("This is info log.")
+//}
+
+func TestLogStash(t *testing.T) {
 	logFormatter := &log.JSONFormatter{
 		FieldMap: *&log.FieldMap{
 			log.FieldKeyMsg: "message",
 		},
 	}
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(logFormatter)
 	conn, err := net.Dial("tcp", "localhost:51401")
 	assert.Nil(t, err)
-	hook := New(conn, logFormatter)
-	logrusConfig := NewLogrusConfig(logFormatter, log.DebugLevel, log.Fields{"project": "test", "module": "stock-backend-internal-api"}, true, hook)
-	err = logrusConfig.InstallConfig()
-	assert.Nil(t, err)
-	//import log "github.com/sillyhatxu/microlog"
-	//log.Debug("This is info log.")
-	//log.Info("This is info log.")
-	Debug("This is debug log.HEIHEI")
-	Info("This is info log.")
+	log.AddHook(Hook{
+		writer:    conn,
+		formatter: logFormatter,
+	})
+	log.Debug("This is debug log.HEIHEI")
+	log.Info("This is info log.")
 }
