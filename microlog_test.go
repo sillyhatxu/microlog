@@ -6,50 +6,154 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 )
 
-//
-//func TestMicrolog(t *testing.T) {
-//	logFormatter := &log.JSONFormatter{
-//		FieldMap: *&log.FieldMap{
-//			log.FieldKeyMsg: "message",
-//		},
-//	}
-//	conn, err := net.Dial("tcp", "localhost:51401")
-//	assert.Nil(t, err)
-//	hook := New(conn, logFormatter)
-//	logrusConfig := NewLogrusConfig(logFormatter, log.DebugLevel, log.Fields{"project": "test", "module": "stock-backend-internal-api"}, true, hook)
-//	err = logrusConfig.InstallConfig()
-//
-//	assert.Nil(t, err)
-//	//import log "github.com/sillyhatxu/microlog"
-//	//log.Debug("This is info log.")
-//	//log.Info("This is info log.")
-//	Debug("This is debug log.HEIHEI")
-//	Info("This is info log.")
-//}
-//
-//func TestMicrologDefault(t *testing.T) {
-//	Debug("This is debug log.HEIHEI")
-//	Info("This is info log.")
-//}
+func TestMicrologNoConfig(t *testing.T) {
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
 
-func TestLogStash(t *testing.T) {
+func TestMicrologWithFields(t *testing.T) {
+	SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
+
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
+
+func TestMicrologBasic(t *testing.T) {
 	logFormatter := &log.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+		//TimestampFormat:string("2006-01-02 15:04:05"),
 		FieldMap: *&log.FieldMap{
-			log.FieldKeyMsg: "message",
+			log.FieldKeyMsg:  "message",
+			log.FieldKeyTime: "@timestamp",
 		},
 	}
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
-	log.SetReportCaller(true)
-	log.SetFormatter(logFormatter)
-	conn, err := net.Dial("tcp", "localhost:51401")
-	assert.Nil(t, err)
-	log.AddHook(Hook{
+	SetOutput(os.Stdout)
+	SetLevel(log.DebugLevel)
+	SetReportCaller(true)
+	SetFormatter(logFormatter)
+
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
+
+func TestMicrologProjectConfig(t *testing.T) {
+	logFormatter := &log.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+		//TimestampFormat:string("2006-01-02 15:04:05"),
+		FieldMap: *&log.FieldMap{
+			log.FieldKeyMsg:  "message",
+			log.FieldKeyTime: "@timestamp",
+		},
+	}
+	SetOutput(os.Stdout)
+	SetLevel(log.DebugLevel)
+	SetReportCaller(true)
+	SetFormatter(logFormatter)
+	SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
+
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
+
+func TestMicrologProjectConfigAndHook(t *testing.T) {
+	logFormatter := &log.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+		//TimestampFormat:string("2006-01-02 15:04:05"),
+		FieldMap: *&log.FieldMap{
+			log.FieldKeyMsg:  "message",
+			log.FieldKeyTime: "@timestamp",
+		},
+	}
+	SetOutput(os.Stdout)
+	SetLevel(log.DebugLevel)
+	SetReportCaller(true)
+	SetFormatter(logFormatter)
+	SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
+
+	conn, err := net.Dial("tcp", "localhost:5000")
+	if err != nil {
+		assert.NotNil(t, err)
+	}
+
+	AddHook(Hook{
 		writer:    conn,
 		formatter: logFormatter,
 	})
-	log.Debug("This is debug log.HEIHEI")
-	log.Info("This is info log.")
+
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
+
+type DefaultFieldHook struct {
+	GetValue func() string
+}
+
+func (h *DefaultFieldHook) Levels() []log.Level {
+	return log.AllLevels
+}
+
+func (h *DefaultFieldHook) Fire(e *log.Entry) error {
+	e.Data["aDefaultField"] = h.GetValue()
+	return nil
+}
+
+func TestMicrologProjectConfigAndHookMulti(t *testing.T) {
+	logFormatter := &log.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+		//TimestampFormat:string("2006-01-02 15:04:05"),
+		FieldMap: *&log.FieldMap{
+			log.FieldKeyMsg:  "message",
+			log.FieldKeyTime: "@timestamp",
+		},
+	}
+	SetOutput(os.Stdout)
+	SetLevel(log.DebugLevel)
+	SetReportCaller(true)
+	SetFormatter(logFormatter)
+	SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
+
+	conn, err := net.Dial("tcp", "localhost:5000")
+	if err != nil {
+		assert.NotNil(t, err)
+	}
+
+	AddHook(Hook{
+		writer:    conn,
+		formatter: logFormatter,
+	})
+	AddHookOrigin(&DefaultFieldHook{GetValue: GetValueImpl})
+
+	Debug("Test Debug")
+	Debugf("Test Debugf %v insert", "0.0")
+	Info("Test Info")
+	Infof("Test Infof %v insert", "0.0")
+	Warning("Test Warning")
+	Warningf("Test Warningf %v insert", "0.0")
+}
+
+func GetValueImpl() string {
+	return "with its default value"
 }
