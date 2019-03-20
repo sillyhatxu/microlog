@@ -108,7 +108,7 @@ func TestMicrologProjectConfigAndHook(t *testing.T) {
 }
 
 type DefaultFieldHook struct {
-	GetValue func() string
+	GetValue func() (string, string)
 }
 
 func (h *DefaultFieldHook) Levels() []log.Level {
@@ -116,8 +116,14 @@ func (h *DefaultFieldHook) Levels() []log.Level {
 }
 
 func (h *DefaultFieldHook) Fire(e *log.Entry) error {
-	e.Data["aDefaultField"] = h.GetValue()
+	project, module := h.GetValue()
+	e.Data["project"] = project
+	e.Data["module"] = module
 	return nil
+}
+
+func GetValueImpl() (string, string) {
+	return "game-api", "module-test"
 }
 
 func TestMicrologProjectConfigAndHookMulti(t *testing.T) {
@@ -133,7 +139,7 @@ func TestMicrologProjectConfigAndHookMulti(t *testing.T) {
 	SetLevel(log.DebugLevel)
 	SetReportCaller(true)
 	SetFormatter(logFormatter)
-	SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
+	//SetFields(log.Fields{"project": "game-api", "module": "mode-test"})
 
 	conn, err := net.Dial("tcp", "localhost:5000")
 	if err != nil {
@@ -152,8 +158,4 @@ func TestMicrologProjectConfigAndHookMulti(t *testing.T) {
 	Infof("Test Infof %v insert", "0.0")
 	Warning("Test Warning")
 	Warningf("Test Warningf %v insert", "0.0")
-}
-
-func GetValueImpl() string {
-	return "with its default value"
 }
